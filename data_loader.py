@@ -6,7 +6,6 @@ from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 
 
-# load CMU-MOSI dataset
 def load_mosi_pkl(file_path, mode='train'):
     with open(file_path, 'rb') as file:
         info = pickle.load(file)
@@ -15,8 +14,6 @@ def load_mosi_pkl(file_path, mode='train'):
         video = info[mode]['video']
         label = info[mode]['labels']
     return raw_text, audio, video, label
-
-# load CMU-MOSEI dataset
 def load_mosei_pkl(file_path, mode='train'):
     with open(file_path, 'rb') as file:
         info = pickle.load(file)
@@ -27,7 +24,6 @@ def load_mosei_pkl(file_path, mode='train'):
     return raw_text, audio, video, label
 
 
-# load EmoVoxCeleb dataset
 def load_emovoxceleb_pkl(file_path):
     with open(file_path, 'rb') as file:
         info = pickle.load(file)
@@ -36,16 +32,12 @@ def load_emovoxceleb_pkl(file_path):
         video = info['video']
     return raw_text, audio, video
 
-
-# load Vader lexicon, get a dictionary
 def load_lexicon(path):
     with open(path, "r") as file:
         # lexicon = {line.split()[0]: line.split()[1] for line in file.readlines()}
         lexicon = {line.split('\t')[0]: line.split('\t')[1] for line in file.readlines()}
     return lexicon
 
-
-# tokenizer, padding and truncating to unified length
 """
 def encode_words(text, tokenizer):
     return tokenizer.encode(text, padding="max_length", truncation=True, max_length=39, return_tensors="pt")
@@ -197,35 +189,3 @@ class DatasetWithGlove(Dataset):
 
     def __len__(self):
         return int(self.size)
-
-
-if __name__ == "__main__":
-    lexicon = load_lexicon("data/vader_lexicon.txt")
-    print(type(lexicon))
-    for key, value in lexicon.items():
-        try:
-            value = float(value)
-        except:
-            print(key, value)
-    print(lexicon["good"], lexicon["bad"], lexicon["nice"], lexicon["fool"])
-    # ================================================================================
-    # raw_text, audio, video, label = load_mosi_pkl("data/CMU-MOSI/mosi.pkl", "train")
-    # print(type(raw_text), type(audio), type(video), type(label))
-    # print(len(raw_text), audio.shape, video.shape, len(label))
-    # print(raw_text[:5])
-    # print(label[:5])
-    # ================================================================================
-    # text = "ANYHOW IT WAS REALLY GOOD"
-    # tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-    # input_ids = encode_words(text, tokenizer)
-    # print(type(input_ids))
-    # print(input_ids.size())
-    # print(input_ids)
-    # ================================================================================
-    # text = "ANYHOW IT WAS REALLY GOOD"
-    # tokenizer = AutoTokenizer.from_pretrained("bert-large-uncased")
-    # input_ids = encode_words(text, tokenizer)
-    # print(type(input_ids))
-    # print(input_ids.size())
-    # print(input_ids)
-    # ================================================================================

@@ -8,9 +8,6 @@ import numpy as np
 
 from torch.nn import Parameter
 
-
-# ---------------------------------------------------------------------------------------------------------------------
-# construct a pre-trained language model
 class PretrainedLanguageModel(nn.Module):
     def __init__(self, pretrained_language_model_name):
         super(PretrainedLanguageModel, self).__init__()
@@ -155,39 +152,25 @@ class PretrainModelCopy(nn.Module):
         return output
 
     def cosine_similarity(self, vec1, vec2):
-        # 初始化余弦相似度列表
         cosine_similarities = []
 
-        # 对每个批次进行余弦相似度计算
         for i in range(vec1.size(0)):
-            # 分别提取每个批次
             a_batch = vec1[i]
             b_batch = vec2[i]
-
-            # 将 A 和 B 分别展平为一维向量
             a_batch_flat = a_batch.flatten()
             b_batch_flat = b_batch.flatten()
-
-            # 计算每个批次内向量的范数
             norm_A = torch.norm(a_batch_flat)
             norm_B = torch.norm(b_batch_flat)
 
-            # 计算每个批次内向量的内积
             dot_product = torch.dot(a_batch_flat, b_batch_flat)
 
-            # 计算每个批次的余弦相似度
             cosine_similarity = dot_product / (norm_A * norm_B)
-            # 将余弦相似度添加到列表中
             cosine_similarities.append(cosine_similarity)
         return cosine_similarities
 
-
-# ---------------------------------------------------------------------------------------------------------------------
-# construct a pre-train model which contains a pre-trained language model and a multimodel fusion module
-class PretrainModel(nn.Module):
     """
     A multimodel fusion model that combines the output of a pre-trained language model and two multimodal models.
-    在特征融合后的权重层
+
     """
 
     def __init__(self, pretrained_language_model_name, text_dim, audio_dim, video_dim, embed_dim, fc_dim, num_layers=4,
@@ -202,7 +185,6 @@ class PretrainModel(nn.Module):
     def feature_extractor(self, input_ids, token_type_ids, attention_mask, audio, video):
         output = self.pretrained_language_model(input_ids, token_type_ids, attention_mask)
         output = self.crossmodal_encoder(output, audio, video)
-        # output = torch.mean(output, dim=1)
         return output
 
     def fitter(self, x):
@@ -212,11 +194,8 @@ class PretrainModel(nn.Module):
     def forward(self, input_ids, token_type_ids, attention_mask, audio, video, index, bs):
         output = self.feature_extractor(input_ids, token_type_ids, attention_mask, audio, video)
         output_n = output
-        # a = output[torch.tensor(range(bs)), index, :]
-        # b = torch.mean(output, dim=1)
         output = self.fitter(output[torch.tensor(range(bs)), index, :])
 
-        # 特征audio和video 归一化处理,融合后特征或者全链接层
         audio = torch.flatten(audio, 1)
         video = torch.flatten(video, 1)
         output_n = torch.flatten(output_n, 1)
@@ -232,9 +211,6 @@ class PretrainModel(nn.Module):
 
         return output, sim_a, sim_v
 
-
-# ---------------------------------------------------------------------------------------------------------------------
-# just use pre-trained language model without non-verbal information for infering the sentiment
 class LanguageModelClassifier(nn.Module):
     def __init__(self, pretrained_language_model, text_dim, fc_dim, fc_dropout=0.5):
         super(LanguageModelClassifier, self).__init__()
@@ -282,9 +258,6 @@ class MarginCosineProduct(nn.Module):
 
     def forward(self, input, label):
         cosine = cosine_sim(input, self.weight)
-        # cosine = F.linear(F.normalize(input), F.normalize(self.weight))
-        # --------------------------- convert label to one-hot ---------------------------
-        # https://discuss.pytorch.org/t/convert-int-into-one-hot-format/507
         label_tmp = label
         label_tmp = label_tmp.to(torch.int64)
         one_hot = torch.zeros_like(cosine)

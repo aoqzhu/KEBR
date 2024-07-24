@@ -144,30 +144,6 @@ def train_epoch(model, iterator, optimizer, criterion):
     t_list.append(t_loss)
     return epoch_loss, t_loss, s_loss
 
-def train_epoch2(model, iterator, optimizer, criterion):
-    model.train()
-    epoch_loss = 0
-    t_loss = 0
-    s_loss = 0
-    for batch in iterator:
-        input_ids, token_type_ids, attention_mask, audio, vision, label = batch
-        input_ids, token_type_ids, attention_mask = input_ids.squeeze(), token_type_ids.squeeze(), attention_mask.squeeze()
-        bs = input_ids.size()[0]
-        optimizer.zero_grad()
-        output, sim_a, sim_v = model(input_ids, token_type_ids, attention_mask, audio, vision)
-        sim_sum = [(a + b) / 2 for a, b in zip(sim_a, sim_v)]
-        sim_sum = [(1 - sim) * s if sim < 0 else torch.abs(torch.cos(math.pi * (sim + angle))) * s for sim in
-                   sim_sum]  # 0<=s<=1/2
-        t_l = criterion(output, label)
-        s_l = sum(sim_sum) / bs
-        loss = t_l + s_l
-        loss.backward()
-        optimizer.step()
-        s_loss += s_l.item()
-        t_loss += t_l.item()
-        epoch_loss = t_loss + s_loss
-    return epoch_loss, t_loss, s_loss
-
 def valid_epoch(model, iterator, criterion):
     model.eval()
     epoch_loss = 0
@@ -223,11 +199,6 @@ def test_score(model, iterator, use_zero=False):
     metrics = Metrics()
     eval_results = metrics.eval_mosei_regression(y_test, preds)
     print(preds[:10], y_test[:10])
-    # non_zeros = np.array([i for i, e in enumerate(y_test) if e != 0 or use_zero])
-    #
-    # preds = preds[non_zeros]
-    # y_test = y_test[non_zeros]
-
     mae = np.round(np.mean(np.absolute(preds - y_test)), decimals=4)
     corr = np.round(np.corrcoef(preds, y_test)[0][1], decimals=4)
     predsbigz = preds

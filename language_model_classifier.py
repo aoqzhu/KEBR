@@ -67,9 +67,6 @@ optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr
 criterion = torch.nn.L1Loss()
 model = model.to(device)
 
-# viz = Visdom()
-# viz.line([[0., 0.]], [0], win='LMClassifier', opts=dict(title='LM train&valid loss', legend=["train loss", "valid loss"]))
-
 def train_epoch(model, iterator, optimizer, criterion):
     model.train()
     epoch_loss = 0
