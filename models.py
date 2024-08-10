@@ -126,48 +126,7 @@ class CrossmodalEncoder(nn.Module):
             output = layer(output, audio, video)
         return output
 
-
-class PretrainModelCopy(nn.Module):
-    """
-    Pretrain model with crossmodal attention 在特征融合走计算相似度
-    """
-
-    def __init__(self, pretrained_language_model_name, text_dim, audio_dim, video_dim, embed_dim, fc_dim, num_layers=4,
-                 attn_dropout=0.5, fc_dropout=0.5):
-        super(PretrainModelCopy, self).__init__()
-        self.pretrained_language_model = PretrainedLanguageModel(pretrained_language_model_name)
-        self.crossmodal_encoder = CrossmodalEncoder(text_dim, audio_dim, video_dim, embed_dim, num_layers, attn_dropout)
-        self.dropout = nn.Dropout(fc_dropout)
-        self.fc1 = nn.Linear(text_dim, fc_dim)
-        self.fc2 = nn.Linear(fc_dim, 1)
-
-    def feature_extractor(self, input_ids, token_type_ids, attention_mask, audio, video):
-        output = self.pretrained_language_model(input_ids, token_type_ids, attention_mask)
-        output = self.crossmodal_encoder(output, audio, video)
-        # output = torch.mean(output, dim=1)
-        return output
-
-    def fitter(self, x):
-        output = self.fc2(self.dropout(F.relu(self.fc1(x))))
-        return output
-
-    def cosine_similarity(self, vec1, vec2):
-        cosine_similarities = []
-
-        for i in range(vec1.size(0)):
-            a_batch = vec1[i]
-            b_batch = vec2[i]
-            a_batch_flat = a_batch.flatten()
-            b_batch_flat = b_batch.flatten()
-            norm_A = torch.norm(a_batch_flat)
-            norm_B = torch.norm(b_batch_flat)
-
-            dot_product = torch.dot(a_batch_flat, b_batch_flat)
-
-            cosine_similarity = dot_product / (norm_A * norm_B)
-            cosine_similarities.append(cosine_similarity)
-        return cosine_similarities
-
+class PretrainModel(nn.Module):
     """
     A multimodel fusion model that combines the output of a pre-trained language model and two multimodal models.
 
